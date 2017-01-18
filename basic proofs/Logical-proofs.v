@@ -48,3 +48,11 @@ Proof.
    exists true.
    simpl. reflexivity.
 Qed.
+
+Theorem idempotence : forall p, p && p = p.
+Proof.
+  intro p.
+  destruct p.
+  - trivial.
+  - trivial.
+Qed.
