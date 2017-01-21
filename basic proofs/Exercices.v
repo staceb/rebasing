@@ -212,8 +212,44 @@ Proof.
     rewrite supp. rewrite supp'. reflexivity.
 Qed.
 
+Fixpoint my_map (X Y:Type) (l:list X) (f: X->Y) : list Y :=
+match l with
+| [] => []
+| h::t => (f h)::(my_map X Y t f)
+end.
 
+Fixpoint my_filter (X:Type) (l:list X) (f:X->bool) : list X :=
+match l with
+| [] => []
+| h::t => if (f h) then (h::(my_filter X t f)) else (my_filter X t f)
+end.
 
+Definition my_foldmap {X Y:Type} (l:list X) (f:X->Y) : list Y :=
+  let fix aux acc l :=
+    match l with 
+    | [] => acc
+    | h::t => (f h)::(aux acc t)
+    end
+  in
+aux [] l.
+
+Fixpoint map_opt {X Y:Type} (l:list (option X)) (f:X->Y) : list (option Y) :=
+match l with
+| [] => []
+| (None)::t => (map_opt t f)
+| (Some h)::t => (Some (f h))::(map_opt t f)
+end.
+
+(* Comprendre l'énoncé et prouver *)
+Theorem opt1 : forall (X:Type) (l:list (option X)),
+  map_opt (fun x => x) l =
+  filter (fun x =>
+    match x with
+    | None => false
+    | _ => true
+    end) l.
+Proof.
+Admitted.
  
 
 
