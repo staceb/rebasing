@@ -240,16 +240,21 @@ match l with
 | (Some h)::t => (Some (f h))::(map_opt t f)
 end.
 
-(* Comprendre l'énoncé et prouver *)
+
 Theorem opt1 : forall (X:Type) (l:list (option X)),
-  map_opt (fun x => x) l =
+  map_opt l (fun x => x) =
   filter (fun x =>
     match x with
     | None => false
     | _ => true
     end) l.
 Proof.
-Admitted.
+  induction l. 
+  - trivial.
+  - simpl.  rewrite <- IHl. destruct a. 
+    * trivial.
+    * trivial.
+Qed.
  
 
 

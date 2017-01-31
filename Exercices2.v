@@ -17,6 +17,7 @@ Definition square n := n*n.
 
 Theorem th0 : square 6 = 36.
 Proof.
+  unfold square. simpl. reflexivity.
 Admitted.
 
 (** SYMMETRY **)
