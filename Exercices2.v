@@ -5,6 +5,7 @@ Require Import Coq.Arith.Plus.
 Open Scope list_scope.
 Import ListNotations.
 
+
 (** Approfondissements des tactiques **)
 
 Definition admit {T: Type} : T.  Admitted.
@@ -18,7 +19,7 @@ Definition square n := n*n.
 Theorem th0 : square 6 = 36.
 Proof.
   unfold square. simpl. reflexivity.
-Admitted.
+Qed.
 
 (** SYMMETRY **)
 (* S'applique soit sur le goal en faisant 'symmetry' soit sur une hypothèse H en faisant
@@ -54,31 +55,82 @@ Admitted.
 
 (** APPLY **)
 
+(* RESTRICTION : Utiliser seulement 'apply' et 'intros' *)
 Theorem impl_transitivity : forall (P Q R : Prop),
   (P -> Q) -> (Q-> R) -> (P -> R).
 Proof.
-  (* RESTRICTION : Utiliser seulement 'apply' et 'intros' *)
-Admitted.
+  intros P Q R.
+  intros H1 H2 H3.
+  apply H2. apply H1. apply H3.
+Qed.
 
+(* RESTRICTION : Utiliser seulement 'apply in et 'intros' *)
 Theorem impl_transitivity' : forall (P Q R : Prop),
   (P -> Q) -> (Q-> R) -> (P -> R).
 Proof.
-  (* RESTRICTION : Utiliser seulement 'apply with' et 'intros' *)
-Admitted.
+  intros P Q R.
+  intros H1 H2 H3.
+  apply H1 in H3.
+  apply H2 in H3.
+  apply H3.
+Qed.
 
 (* Montrer une équivalence <-> on doit montrer -> et <-.
    - Si l'équivalence est dans le goal : on utilise 'split'
    - Si l'équivalence H est dans le contexte : on utilise 'destruct H' *)
+(*
+Split permet d'obtenir les deux implications d'une équivalence
+*)
 Theorem equiv_comm : forall (P Q : Prop),
   (P <-> Q) <-> (Q <-> P).
 Proof.
-Admitted.
+  split.
+  - intro H. destruct H. split.
+    * intro Q'. apply H0. apply Q'.
+    * intro P'. apply H in P'. apply P'.
+  - intro H. destruct H. split.
+    * intro P'. apply H0 in P'. apply P'.
+    * intro Q'. apply H. apply Q'.
+Qed.
  
 (* S'il y a une contradiction dans le contexte, utiliser la tactique 'contradiction'
    pour résoudre le goal. *)
 Theorem pair_eq : forall (n:nat), Nat.even n = true <-> Nat.odd n = false.
 Proof.
-Admitted.
+  intro n.
+  split. 
+  - intro nT. unfold Nat.odd. rewrite -> nT. simpl. reflexivity.
+  - intro nF. unfold Nat.odd in nF. destruct (Nat.even n).
+    * trivial.
+    * simpl in nF. rewrite nF. reflexivity.
+(*Regarde les constructeur sur une hypothèse du contexte, si c'est impossible
+il va résoudre lui-même le goal à la place du rewrite + reflexivity*)
+(*inversion nF.*)
+Qed.
+
+Axiom ex : forall P, P \/ not P.
+
+Theorem tiersexclu : (1 = 1).
+Proof.
+  pose (ex (1 =1)) as ex.
+  destruct ex.
+  - apply H.
+  - unfold not in H. assert (1 = 1). reflexivity.
+    apply H in H0. contradiction.
+Qed.
+
+(*Quand on a une hypothèse = False c'est une contradiction.*)
+Theorem contra1 : False -> 1 = 0.
+Proof.
+  intro F. contradiction.
+Qed.
+
+(*On a 1 = 0, inversion va voir si ils ont un constructeur commun
+si ce n'est pas le cas c'est une contradiction*)
+Theorem contra2 : 1 = 0 -> 3 = 6.
+Proof.
+  intro UnZ. inversion UnZ.
+Qed.
 
 (** Inversion **)
 (* La tactique 'inversion' s'applique sur une hypothèse par ex : 'inversion H' et 
@@ -99,16 +151,23 @@ Qed.
 
 Theorem inversion_listes : forall (n m : nat), [n] = [m] -> n = m.
 Proof.
-Admitted.
+  intros n m H.
+  inversion H.
+  reflexivity.
+Qed.
 
 Theorem inversion_trivial1 : forall {X:Type} (h:X) (t:list X),
   [] = h::t -> 1 + 1 = 11.
 Proof.
-Admitted.
+  intros X h t H.
+  inversion H.
+Qed.
 
 Theorem inversion_trivial2 : false = true -> 1 + 1 = 11.
 Proof.
-Admitted.
+  intro H.
+  inversion H.
+Qed.
 
 Inductive t :=
   | a
@@ -120,7 +179,9 @@ Inductive t :=
 Theorem inversion_general : forall (c1 c2 c3 c1' c2' c3' : t),
   c c1 c2 c3 = c c1' c2' c3' -> c2 = c2'.
 Proof.
-Admitted.
+  intros. (*Vide toute la pile*)
+  inversion H. reflexivity. 
+Qed.
 
 (** Puissance de l'hypothèse d'induction **)
 (* Parfois il est nécessaire de laisser général les autres termes en dehors du sujet
@@ -128,10 +189,22 @@ Admitted.
 (* - Soit on introduit tout et on fait 'generalize dependent' sur un terme autre que le
      sujet d'induction
    - Soit on introduit juste le sujet d'induction et on lance l'induction. *)
+Lemma add_succ_l n m : m + (S n) = S (n + m). Admitted.
 
 Theorem double_injective: forall n m, 2*n = 2*m -> n = m.
 Proof.
-Admitted.
+  intros. generalize dependent n. 
+  induction m.
+  - intros. simpl in H. destruct n eqn:Hn. (*Garde la valeur de n*)
+    * trivial. 
+    * inversion H.
+  - intros. destruct n.
+    * inversion H.
+    * simpl in H. inversion H. rewrite -> (plus_comm n 0) in H1. simpl in H1.
+      rewrite -> (plus_comm m 0) in H1. simpl in H1.
+      rewrite -> add_succ_l in H1. rewrite -> add_succ_l in H1.
+      inversion H1. 
+Qed.
 
 Theorem beq_nat_eq : forall (n m:nat), n = m <-> beq_nat n m = true.
 Proof.
